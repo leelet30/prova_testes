@@ -1,100 +1,83 @@
-import unittest #essa biblioteca é para criar os testes unitários
-import sqlite3 #essa biblioteca é para manipular o banco de dados
-import os #essa biblioteca é para apagar o banco de dados depois do teste, para não ficar acumulando lixo
-import database as db
+import sqlite3
 
-class TestCadastroAluno(unittest.TestCase): #casos de teste para a classe TestDatabase, que herda da classe TestCase do unittest
+def conectar():
+    conn = sqlite3.connect("escola.db")
+    return conn
 
+def criar_tabela(nome_banco= "escola.db"):
 
-    def setUp(self): #o setup é um método que é executado antes de cada teste, para preparar o ambiente de teste. cria a acaixa de areia
-       #o self é uma referência para o objeto que está sendo criado, nesse caso, a instância da classe TestDatabase.
-       self.banco_teste = "banco_teste.db" #aqui é o nome do banco de dados que será usado para os testes, para não interferir no banco de dados real.
-       db.criar_tabela(nome_banco=self.banco_teste) 
+    conn = sqlite3.connect(nome_banco)
+    cursor = conn.cursor()
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS alunos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            idade INTEGER NOT NULL,
+            nota REAL)
+    """)
 
-    def tearDown(self):
-        if os.path.exists(self.banco_teste):
-            os.remove(self.banco_teste) 
+    conn.commit()
+    conn.close()
 
-    def test_cadastrar_aluno_com_sucesso(self): #nesse caso de teste, estamos testando se o cadastro de um aluno com sucesso funciona corretamente.
-        db.cadastro_aluno("Toninho", 1.5, 17, 
-                          self.banco_teste)
+def cadastro_aluno(nome: str, idade, nota, 
+                   nome_banco= "escola.db"):
 
-        conn = sqlite3.connect(self.banco_teste)
-        cursor = conn.cursor()
-        cursor.execute ("SELECT * FROM alunos WHERE nome = 'Toninho' ")
-        aluno_salvo = cursor.fetchone()
-        conn.close()
-
-        self.assertIsNotNone(aluno_salvo, "O aluno não esta cadastrado") #aqui testa se o aluno foi cadastrado, se não for, retorna a mensagem "O aluno não esta cadastrado"
-        self.assertEqual(aluno_salvo[1], "Toninho") #aqui testa se o nome do aluno cadastrado é igual ao que foi passado no cadastro
-        self.assertEqual(aluno_salvo[2], 1.5) #aqui testa se a nota do aluno cadastrado é igual ao que foi passado no cadastro
-        self.assertEqual(aluno_salvo[3], 17) #aqui testa se a idade do aluno cadastrado é igual ao que foi passado no cadastro
-
-
-if __name__ == "__main__": 
-    unittest.main()
-
-#criar uma classe de teste para cada funcionaidade e todos com sucesso
-
-class TestDeletarAluno(unittest.TestCase):
-
- def setUp(self): 
-       self.banco_teste = "banco_teste.db"
-       db.criar_tabela(nome_banco=self.banco_teste) 
-
- def tearDown(self):
-        if os.path.exists(self.banco_teste):
-            os.remove(self.banco_teste) 
-
- def test_delete_aluno_com_sucesso(self): #nesse caso de teste, estamos testando se o deletar de um aluno com sucesso funciona corretamente.
-
-        db.cadastro_aluno("Toninho", 1.5, 17, 
-                          self.banco_teste)
-
-        db.delete_aluno("Toninho", 1.5, 17, self.banco_teste)
-
-        conn = sqlite3.connect(self.banco_teste)
+    if nome.strip() == "":
+        return "Nome do aluno não pode ficar em branco."
     
-        cursor = conn.cursor()
-        cursor.execute ("SELECT * FROM alunos WHERE nome = 'Toninho' ")
-        aluno_salvo = cursor.fetchone()
-        conn.close()
-
-        self.assertIsNone(aluno_salvo, "O aluno ainda esta cadastrado") #aqui testa se o aluno foi deletado, se ainda estiver cadastrado, retorna a mensagem "O aluno ainda esta cadastrado"
-
-if __name__ == "__main__": 
-    unittest.main()
-
-
-
-
-class TestUpdateIdadeAluno(unittest.TestCase):
-
- def setUp(self): 
-       self.banco_teste = "banco_teste.db"
-       db.criar_tabela(nome_banco=self.banco_teste) 
-
- def tearDown(self):
-        if os.path.exists(self.banco_teste):
-            os.remove(self.banco_teste) 
-
- def test_update_idade_aluno_com_sucesso(self): #nesse caso de teste, estamos testando se o atualizar a idade de um aluno com sucesso funciona corretamente.
-
-        db.cadastro_aluno("Toninho", 1.5, 33, 
-                          self.banco_teste)
-
-        db.update_idade_aluno("Toninho", 34, self.banco_teste)
-
-        conn = sqlite3.connect(self.banco_teste)
+    elif idade > 22:
+        return "Idade acima de 22 anos."
     
+    else:
+        conn = sqlite3.connect(nome_banco)
         cursor = conn.cursor()
-        cursor.execute ("SELECT * FROM alunos WHERE nome = 'Toninho' ")
-        aluno_salvo = cursor.fetchone()
+
+        cursor.execute("INSERT INTO alunos (nome, idade, nota) VALUES (?, ?, ?)", (nome, idade, nota))  
+
+        conn.commit()
         conn.close()
 
-        self.assertEqual(aluno_salvo[1], 1.5, "A nota do aluno não foi atualizada corretamente") #aqui testa se a nota do aluno foi atualizada
-        self.assertEqual(aluno_salvo[3], 18, "A idade do aluno não foi atualizada corretamente") #aqui testa se a idade do aluno foi atualizada
+        return "Aluno cadastrado com sucesso!"
 
-if __name__ == "__main__": 
-    unittest.main()
+def delete_aluno(id, nome_banco= "escola.db"):
+    if id > 0:
+        conn = sqlite3.connect(nome_banco)
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM alunos WHERE id = ?", (id,))  
+
+        conn.commit()
+        conn.close()
+
+        return True
+    else:
+        return False
+
+def update_idade_aluno(id_aluno, idade):
+
+    if idade >22:
+        return "Idade acima de 22 anos."
+
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("UPDATE alunos SET idade = ? WHERE id = ?", (idade, id_aluno))
+    rows_affected = cursor.rowcount
+
+    if rows_affected > 0:
+        conn.commit()
+        conn.close()
+
+    else:
+        return f"O aluno de ID {id_aluno} não foi encontrado no banco de dados."
+
+def getAlunos():
+    conn = conectar()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM alunos")
+    dados_alunos = cursor.fetchall()
+
+    conn.close()
+    return dados_alunos
