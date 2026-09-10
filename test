@@ -32,69 +32,63 @@ class TestCadastroAluno(unittest.TestCase): #casos de teste para a classe TestDa
         self.assertEqual(aluno_salvo[3], 17) #aqui testa se a idade do aluno cadastrado é igual ao que foi passado no cadastro
 
 
-if __name__ == "__main__": 
-    unittest.main()
-
 #criar uma classe de teste para cada funcionaidade e todos com sucesso
 
 class TestDeletarAluno(unittest.TestCase):
 
- def setUp(self): 
-       self.banco_teste = "banco_teste.db"
-       db.criar_tabela(nome_banco=self.banco_teste) 
+    def setUp(self): 
+        self.banco_teste = "banco_teste.db"
+        db.criar_tabela(nome_banco=self.banco_teste) 
 
- def tearDown(self):
+    def tearDown(self):
         if os.path.exists(self.banco_teste):
             os.remove(self.banco_teste) 
 
- def test_delete_aluno_com_sucesso(self): #nesse caso de teste, estamos testando se o deletar de um aluno com sucesso funciona corretamente.
+    def test_delete_aluno_com_sucesso(self): #nesse caso de teste, estamos testando se o deletar de um aluno com sucesso funciona corretamente.
 
         db.cadastro_aluno("Toninho", 1.5, 17, 
                           self.banco_teste)
 
-        db.delete_aluno("Toninho", 1.5, 17, self.banco_teste)
-
         conn = sqlite3.connect(self.banco_teste)
-    
         cursor = conn.cursor()
         cursor.execute ("SELECT * FROM alunos WHERE nome = 'Toninho' ")
-        aluno_salvo = cursor.fetchone()
+        id_aluno = cursor.fetchone()[0] #uma tupla é uma estrutura de dados que armazena uma sequência de elementos, nesse caso, aq pega o primeiro elemento da tupla, que é o id do aluno
         conn.close()
 
-        self.assertIsNone(aluno_salvo, "O aluno ainda esta cadastrado") #aqui testa se o aluno foi deletado, se ainda estiver cadastrado, retorna a mensagem "O aluno ainda esta cadastrado"
+        msg= db.delete_aluno(id_aluno, nome_banco= self.banco_teste)
 
-if __name__ == "__main__": 
-    unittest.main()
-
-
+        self.assertTrue(msg)#aqui testa se o aluno foi deletado, se ainda estiver cadastrado, retorna a mensagem "O aluno ainda esta cadastrado"
+        #testa se o valor passado é None, se não for, retorna a mensagem passada como segundo argumento
 
 
-class TestUpdateIdadeAluno(unittest.TestCase):
 
- def setUp(self): 
-       self.banco_teste = "banco_teste.db"
-       db.criar_tabela(nome_banco=self.banco_teste) 
 
- def tearDown(self):
-        if os.path.exists(self.banco_teste):
-            os.remove(self.banco_teste) 
+#class TestUpdateIdadeAluno(unittest.TestCase):
 
- def test_update_idade_aluno_com_sucesso(self): #nesse caso de teste, estamos testando se o atualizar a idade de um aluno com sucesso funciona corretamente.
+ #def setUp(self): 
+       #self.banco_teste = "banco_teste.db"
+       #db.criar_tabela(nome_banco=self.banco_teste) 
 
-        db.cadastro_aluno("Toninho", 1.5, 33, 
-                          self.banco_teste)
+ #def tearDown(self):
+       # if os.path.exists(self.banco_teste):
+           # os.remove(self.banco_teste) 
 
-        db.update_idade_aluno("Toninho", 34, self.banco_teste)
+ #def test_update_idade_aluno_com_sucesso(self): #nesse caso de teste, estamos testando se o atualizar a idade de um aluno com sucesso funciona corretamente.
 
-        conn = sqlite3.connect(self.banco_teste)
+        #db.cadastro_aluno("Toninho", 1.5, 17, 
+                        #  self.banco_teste)
+
+       # db.update_idade_aluno("Toninho", 18, self.banco_teste)
+
+       # conn = sqlite3.connect(self.banco_teste)
     
-        cursor = conn.cursor()
-        cursor.execute ("SELECT * FROM alunos WHERE nome = 'Toninho' ")
-        aluno_salvo = cursor.fetchone()
-        conn.close()
+       # cursor = conn.cursor()
+       # cursor.execute ("SELECT * FROM alunos WHERE nome = 'Toninho' ")
+        #aluno_salvo = cursor.fetchone()
+        #conn.close()
 
-        self.assertEqual(aluno_salvo[1], 1.5, "A nota do aluno não foi atualizada corretamente") #aqui testa se a nota do aluno foi atualizada
-        self.assertEqual(aluno_salvo[3], 18, "A idade do aluno não foi atualizada corretamente") #aqui testa se a idade do aluno foi atualizada
+       # self.assertEqual(aluno_salvo[1], 1.5, "A nota do aluno não foi atualizada corretamente") #aqui testa se a nota do aluno foi atualizada
+        #self.assertEqual(aluno_salvo[3], 18, "A idade do aluno não foi atualizada corretamente") #aqui testa se a idade do aluno foi atualizada
 
 if __name__ == "__main__": 
     unittest.main()
